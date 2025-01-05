@@ -1,23 +1,32 @@
-name: Tag Review
+name: Tag Creation with Reviewer Approval
 
 on:
-  create:
+  push:
     tags:
-      - 'v1.*'
+      - 'v*' # Match tags starting with 'v'
 
 jobs:
-  tag-review:
+  require_approval:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Require approval for tag creation
-      run: |
-        echo "A new tag with the pattern 'v1.*.*' has been created."
-        echo "Review is required before proceeding."
-        exit 1  # Block the workflow until approval
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Manual approval
-      uses: hmarr/auto-approve-action@v2
-      if: always()
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Wait for approval
+        uses: gh-actions/wait-for-approval@v1
+        with:
+          issue_title: "Tag Creation Request for ${{ github.ref }}"
+          body: "Please review and approve the tag creation."
+          assignees: ${{ secrets.disk2devops }} # Replace with reviewer username
+
+  create-tag:
+    needs: require_approval
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Create tag
+        run: |
+          git tag ${{ github.ref }}
+          git push origin ${{ github.ref }}
