@@ -1,0 +1,23 @@
+name: Tag Review
+
+on:
+  create:
+    tags:
+      - 'v1.*'
+
+jobs:
+  tag-review:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Require approval for tag creation
+      run: |
+        echo "A new tag with the pattern 'v1.*.*' has been created."
+        echo "Review is required before proceeding."
+        exit 1  # Block the workflow until approval
+
+    - name: Manual approval
+      uses: hmarr/auto-approve-action@v2
+      if: always()
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
